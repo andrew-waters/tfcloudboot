@@ -27,13 +27,13 @@ spec:
   resources:
     vars:
     - name: foo
-      val: bar
+      value: bar
     - name: baz
       type: number
-      val: 3
+      value: 3
     - name: bat
       type: bool
-      val: true
+      value: true
     env:
     - name: foobar
       sensitive: true
