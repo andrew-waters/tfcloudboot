@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"reflect"
 	"strings"
 	"text/template"
 
@@ -23,11 +24,12 @@ resource "tfe_workspace" "{{ .Metadata.ID }}" {
 	file_triggers_enabled = {{ .Spec.FileTriggersEnabled }}
 	queue_all_runs 				= {{ .Spec.QueueAllRuns }}
 	vcs_repo {
-		identifier         = "{{ .Spec.VCSRepo.Identifier }}"
-		branch             = "{{ .Spec.VCSRepo.Branch }}"
-		ingress_submodules = {{ .Spec.VCSRepo.IngressSubmodules }}
-		oauth_token_id     = "{{ .Spec.VCSRepo.OauthTokenID }}"
+		identifier          = "{{ .Spec.VCSRepo.Identifier }}"
+		branch              = "{{ .Spec.VCSRepo.Branch }}"
+		ingress_submodules  = {{ .Spec.VCSRepo.IngressSubmodules }}
+		oauth_token_id      = "{{ .Spec.VCSRepo.OauthTokenID }}"
 	}
+	trigger_prefixes 		  = [{{ with .Spec.TriggerPrefixes }}{{$n := .}}{{ range $i, $e := . }}"{{ . }}"{{ if last $i $n }}{{ else }}, {{ end }}{{ end }}{{ end }}]
 }
 
 // variable declarations:
@@ -88,15 +90,16 @@ type Workspace struct {
 }
 
 type WorkspaceSpec struct {
-	VCSRepo             VCSRepoSpec `yaml:"vcs_repo"`
-	WorkingDirectory    string      `yaml:"working_directory"`
-	AutoApply           bool        `yaml:"auto_apply"`
-	FileTriggersEnabled bool        `yaml:"file_triggers_enabled"`
-	QueueAllRuns        bool        `yaml:"queue_all_runs"`
+	AutoApply           bool `yaml:"auto_apply"`
+	FileTriggersEnabled bool `yaml:"file_triggers_enabled"`
+	QueueAllRuns        bool `yaml:"queue_all_runs"`
 	Resources           struct {
 		Vars []Variable
 		Env  []Variable
-	}
+	} `yaml:"resources"`
+	TriggerPrefixes  []string    `yaml:"trigger_prefixes"`
+	VCSRepo          VCSRepoSpec `yaml:"vcs_repo"`
+	WorkingDirectory string      `yaml:"working_directory"`
 }
 
 type VCSRepoSpec struct {
@@ -158,6 +161,9 @@ func (w *Workspace) Output(outputDir string, outputName string, secretsFile stri
 
 	funcMap := template.FuncMap{
 		"ToLower": strings.ToLower,
+		"last": func(x int, a interface{}) bool {
+			return x == reflect.ValueOf(a).Len()-1
+		},
 	}
 
 	// create the Terraform stanza's
