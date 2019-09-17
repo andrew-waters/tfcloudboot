@@ -84,6 +84,12 @@ To select a secrets file which contains your secret values, use the `-s` flag to
 tfcloudboot strap -f my-workspace.yaml -s my-secrets.yaml -o output_dir
 ```
 
+To give your file a distinct name (defaults to `workspace.tf` and `workspace.auto.tfvars`) use the `-n` flag:
+
+```bash
+tfcloudboot strap -f my-workspace.yaml -s my-secrets.yaml -o output_dir -n my-workspace
+```
+
 After you have executed the `strap` command, you will have two new files in your output location:
 
 ```hcl

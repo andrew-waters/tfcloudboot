@@ -33,11 +33,13 @@ resource "tfe_workspace" "{{ .Metadata.ID }}" {
 // variable declarations:
 {{ with .Spec.Resources.Vars }}
 {{ range . }}variable "{{ $.Metadata.ID }}_var_{{ .Name }}" {}
+
 resource "tfe_variable" "{{ $.Metadata.ID }}_var_{{ .Name }}" {
 	workspace_id = tfe_workspace.{{ $.Metadata.ID }}.id
 	key          = "{{ .Name }}"
 	value        = var.{{ $.Metadata.ID }}_var_{{ .Name }}
-	category     = "terraform"
+	category     = "terraform"{{ if .Sensitive }}
+	sensitive    = true{{ end }}
 }
 
 {{ end }}{{ end }}
@@ -45,6 +47,7 @@ resource "tfe_variable" "{{ $.Metadata.ID }}_var_{{ .Name }}" {
 // env variable declarations:
 {{ with .Spec.Resources.Env }}
 {{ range . }}variable "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {}
+
 resource "tfe_variable" "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {
 	workspace_id = tfe_workspace.{{ $.Metadata.ID }}.id
 	key          = "{{ .Name }}"
@@ -141,10 +144,10 @@ func NewWorkspace(file string) *Workspace {
 }
 
 // Output a workspace to destination files
-func (w *Workspace) Output(outputDir string, secretsFile string) {
+func (w *Workspace) Output(outputDir string, outputName string, secretsFile string) {
 
-	d := fmt.Sprintf("%s/workspace.tf", outputDir)
-	s := fmt.Sprintf("%s/workspace.auto.tfvars", outputDir)
+	d := fmt.Sprintf("%s/%s.tf", outputDir, outputName)
+	s := fmt.Sprintf("%s/%s.auto.tfvars", outputDir, outputName)
 
 	// subsitute values
 	w.substitute(secretsFile)

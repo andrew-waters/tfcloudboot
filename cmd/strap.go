@@ -11,6 +11,7 @@ import (
 var (
 	inputFile   string
 	outputDir   string
+	outputName  string
 	secretsFile string
 
 	strapCmd = &cobra.Command{
@@ -25,6 +26,7 @@ func init() {
 	strapCmd.Flags().StringVarP(&inputFile, "file", "f", "", "The input yaml file")
 	strapCmd.Flags().StringVarP(&secretsFile, "secrets", "s", "", "The location of a yaml file containing secrets to merge")
 	strapCmd.Flags().StringVarP(&outputDir, "output", "o", "", "The output directory (leave blank for pwd)")
+	strapCmd.Flags().StringVarP(&outputName, "name", "n", "", "The filename to save the generated workspace with")
 	strapCmd.MarkFlagRequired("file")
 }
 
@@ -53,7 +55,11 @@ func strap(ccmd *cobra.Command, args []string) {
 		}
 	}
 
+	if outputName == "" {
+		outputName = "workspace"
+	}
+
 	// create the workspace and output the rendered terraform files
 	ws := entities.NewWorkspace(inputFile)
-	ws.Output(outputDir, secretsFile)
+	ws.Output(outputDir, outputName, secretsFile)
 }
