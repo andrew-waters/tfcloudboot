@@ -1,7 +1,8 @@
-# Terraform Boostrapper
+# Terraform Bootsrapper
 
 Terraform Boostrapper is a small utility for quickly bootstrapping Terraform Cloud files for Workspaces and generating variable files through a much simpler yaml declaration.
 
+This utility is useful when you have a large number of workspaces with a large number of variables for those workspaces (including environment variables) by dramatically reducing the amount of boilerplate code required. Instead you can declaratively specify the configuration in a much shorter yaml file. Because you don't have enough yaml already.
 
 ## Installation
 
