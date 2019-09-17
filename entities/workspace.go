@@ -32,7 +32,9 @@ resource "tfe_workspace" "{{ .Metadata.ID }}" {
 
 // variable declarations:
 {{ with .Spec.Resources.Vars }}
-{{ range . }}variable "{{ $.Metadata.ID }}_var_{{ .Name }}" {}
+{{ range . }}variable "{{ $.Metadata.ID }}_var_{{ .Name }}" {
+	type = {{ .Type }}
+}
 
 resource "tfe_variable" "{{ $.Metadata.ID }}_var_{{ .Name }}" {
 	workspace_id = tfe_workspace.{{ $.Metadata.ID }}.id
@@ -46,7 +48,9 @@ resource "tfe_variable" "{{ $.Metadata.ID }}_var_{{ .Name }}" {
 
 // env variable declarations:
 {{ with .Spec.Resources.Env }}
-{{ range . }}variable "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {}
+{{ range . }}variable "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {
+	type = {{ .Type }}
+}
 
 resource "tfe_variable" "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {
 	workspace_id = tfe_workspace.{{ $.Metadata.ID }}.id
