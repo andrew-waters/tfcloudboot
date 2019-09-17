@@ -24,6 +24,16 @@ metadata:
   shortname: mtcw
   organization: YourOrganisation
 spec:
+  vcs_repo:
+    identifier: org/repo
+    branch: master
+    ingress_submodules: false
+    oauth_token_id: ot-XXXXXXXXXXXXXXXX
+  working_directory: path/to/workspace
+  auto_apply: false
+  file_triggers_enabled: true
+  queue_all_runs: true
+  terraform_version: 0.12
   resources:
     vars:
     - name: foo
@@ -42,6 +52,19 @@ spec:
       value: batfoo
 ```
 
+You can (optionally) create a secrets yaml file - which is most useful when encrypted or otherwise omitted from your source control. Values from this file will be merged into your workspace variables and placed in `workspace.auto.tfvars`. The format for this file is:
+
+```yaml
+# secrets.yaml
+kind: SecretList
+spec:
+  secrets:
+    - name: password
+      value: 2S7hprPE84dLxaEa
+```
+
+Note that both `env` and `var` resources from the workspace will be substituted by matching the secret name to the resource name.
+
 ### Build the terraform files
 
 ```bash
@@ -54,7 +77,13 @@ Or you can output it to a specific directory:
 tfcloudboot strap -f my-workspace.yaml -o output_dir
 ```
 
-You will have two new files in your output location:
+To select a secrets file which contains your secret values, use the `-s` flag to indicate the location of your secrets file:
+
+```bash
+tfcloudboot strap -f my-workspace.yaml -s my-secrets.yaml -o output_dir
+```
+
+After you have executed the `strap` command, you will have two new files in your output location:
 
 ```hcl
 # workspace.tf
