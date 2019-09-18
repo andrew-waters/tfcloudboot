@@ -32,6 +32,21 @@ resource "tfe_workspace" "{{ .Metadata.ID }}" {
 	trigger_prefixes 		  = [{{ with .Spec.TriggerPrefixes }}{{$n := .}}{{ range $i, $e := . }}"{{ . }}"{{ if last $i $n }}{{ else }}, {{ end }}{{ end }}{{ end }}]
 }
 
+{{ with .Spec.Notifications }}{{ range . }}
+variable "{{ $.Metadata.ID }}_var_notifications_{{ .Name }}_url" {
+	type = string
+}
+
+resource "tfe_notification_configuration" "{{ $.Metadata.ID }}_{{ .Name }}" {
+  name                      = "{{ .Name }}"
+  enabled                   = {{ .Enabled }}
+  destination_type          = "{{ .DestinationType }}"
+  triggers                  = [{{ with .Triggers }}{{$n := .}}{{ range $i, $e := . }}"{{ . }}"{{ if last $i $n }}{{ else }}, {{ end }}{{ end }}{{ end }}]
+  url                       = var.{{ $.Metadata.ID }}_var_notifications_{{ .Name }}_url
+  workspace_external_id     = tfe_workspace.{{ $.Metadata.ID }}.external_id
+}
+{{ end }}{{ end }}
+
 // variable declarations:
 {{ with .Spec.Resources.Vars }}
 {{ range . }}variable "{{ $.Metadata.ID }}_var_{{ .Name }}" {
@@ -73,6 +88,11 @@ resource "tfe_variable" "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {
 // env variable values:
 {{ with .Spec.Resources.Env }}
 {{ range . }}{{ $.Metadata.ID }}_env_{{ .Name | ToLower }} = {{ .Value }}
+{{ end }}{{ end }}
+
+// notification values:
+{{ with .Spec.Resources.Notifications }}
+{{ range . }}{{ .Name | ToLower }} = {{ .Value }}
 {{ end }}{{ end }}`
 )
 
@@ -90,16 +110,26 @@ type Workspace struct {
 }
 
 type WorkspaceSpec struct {
-	AutoApply           bool `yaml:"auto_apply"`
-	FileTriggersEnabled bool `yaml:"file_triggers_enabled"`
-	QueueAllRuns        bool `yaml:"queue_all_runs"`
+	AutoApply           bool           `yaml:"auto_apply"`
+	FileTriggersEnabled bool           `yaml:"file_triggers_enabled"`
+	Notifications       []Notification `yaml:"notifications"`
+	QueueAllRuns        bool           `yaml:"queue_all_runs"`
 	Resources           struct {
-		Vars []Variable
-		Env  []Variable
+		Vars          []Variable
+		Env           []Variable
+		Notifications []Variable
 	} `yaml:"resources"`
 	TriggerPrefixes  []string    `yaml:"trigger_prefixes"`
 	VCSRepo          VCSRepoSpec `yaml:"vcs_repo"`
 	WorkingDirectory string      `yaml:"working_directory"`
+}
+
+type Notification struct {
+	Name            string   `yaml:"name"`
+	Enabled         bool     `yaml:"enabled"`
+	DestinationType string   `yaml:"destination_type"`
+	Triggers        []string `yaml:"triggers"`
+	URL             string   `yam:"url`
 }
 
 type VCSRepoSpec struct {
@@ -253,6 +283,18 @@ func (w *Workspace) substitute(secretsFile string) {
 		}
 		if t.Type == "string" {
 			w.Spec.Resources.Env[i].Value = fmt.Sprintf("\"%s\"", t.Value)
+		}
+	}
+
+	for _, n := range w.Spec.Notifications {
+		for _, sec := range s.Spec.Secrets {
+			sub := fmt.Sprintf("notifications_%s_url", n.Name)
+			if sec.Name == sub {
+				w.Spec.Resources.Notifications = append(w.Spec.Resources.Notifications, Variable{
+					Name:  fmt.Sprintf("%s_var_notifications_%s_url", w.Metadata.ID, n.Name),
+					Value: fmt.Sprintf("\"%s\"", sec.Value),
+				})
+			}
 		}
 	}
 }
