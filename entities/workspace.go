@@ -2,10 +2,12 @@ package entities
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -37,7 +39,7 @@ variable "{{ $.Metadata.ID }}_var_notifications_{{ .Name }}_url" {
 	type = string
 }
 
-resource "tfe_notification_configuration" "{{ $.Metadata.ID }}_{{ .Name }}" {
+resource "tfe_notification_configuration" "{{ .Name }}" {
   name                      = "{{ .Name }}"
   enabled                   = {{ .Enabled }}
   destination_type          = "{{ .DestinationType }}"
@@ -72,7 +74,7 @@ resource "tfe_variable" "{{ $.Metadata.ID }}_var_{{ .Name }}" {
 resource "tfe_variable" "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {
 	workspace_id = tfe_workspace.{{ $.Metadata.ID }}.id
 	key          = "{{ .Name }}"
-	value        = var.{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}
+	value        = "${var.{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}}"
 	category     = "env"{{ if .Sensitive }}
 	sensitive    = true{{ end }}
 }
@@ -282,7 +284,12 @@ func (w *Workspace) substitute(secretsFile string) {
 			}
 		}
 		if t.Type == "string" {
-			w.Spec.Resources.Env[i].Value = fmt.Sprintf("\"%s\"", t.Value)
+			if t.isJSON() {
+				t.Value = strconv.Quote(t.Value)
+			} else {
+				t.Value = fmt.Sprintf("\"%s\"", t.Value)
+			}
+			w.Spec.Resources.Env[i].Value = t.Value
 		}
 	}
 
@@ -297,4 +304,10 @@ func (w *Workspace) substitute(secretsFile string) {
 			}
 		}
 	}
+}
+
+func (v Variable) isJSON() bool {
+	var x struct{}
+	err := json.Unmarshal([]byte(v.Value), &x)
+	return err == nil
 }
