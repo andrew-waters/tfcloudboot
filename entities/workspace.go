@@ -2,7 +2,6 @@ package entities
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/yaml.v1"
 )
 
@@ -126,40 +126,6 @@ type WorkspaceSpec struct {
 	WorkingDirectory string      `yaml:"working_directory"`
 }
 
-type Notification struct {
-	Name            string   `yaml:"name"`
-	Enabled         bool     `yaml:"enabled"`
-	DestinationType string   `yaml:"destination_type"`
-	Triggers        []string `yaml:"triggers"`
-	URL             string   `yam:"url`
-}
-
-type VCSRepoSpec struct {
-	Identifier        string `yaml:"identifier"`
-	Branch            string `yaml:"branch"`
-	IngressSubmodules bool   `yaml:"ingress_submodules"`
-	OauthTokenID      string `yaml:"oauth_token_id"`
-}
-
-type Variable struct {
-	Name      string `yaml:"name"`
-	Type      string `yaml:"type"`
-	Value     string `yaml:"value"`
-	Sensitive bool   `yaml:"sensitive"`
-}
-
-type Secrets struct {
-	Kind string `yaml:"oauth_token_id"`
-	Spec struct {
-		Secrets []Secret `yaml:"secrets"`
-	} `yaml:"spec"`
-}
-
-type Secret struct {
-	Name  string `yaml:"name"`
-	Value string `yaml:"value"`
-}
-
 // NewWorkspace creates a new Workspace from an input yaml file and returns a pointer to it
 func NewWorkspace(file string) *Workspace {
 
@@ -233,16 +199,6 @@ func (w *Workspace) Output(outputDir string, outputName string, secretsFile stri
 	}
 }
 
-// initialise variables (can be normal terraform variables of environment variables)
-func initVarMap(vars []Variable) []Variable {
-	for i, v := range vars {
-		if v.Type == "" {
-			vars[i].Type = defaultVarType
-		}
-	}
-	return vars
-}
-
 // substitute var/env values so they're in the struct and available to the templates
 func (w *Workspace) substitute(secretsFile string) {
 
@@ -262,6 +218,14 @@ func (w *Workspace) substitute(secretsFile string) {
 	}
 
 	for i, t := range w.Spec.Resources.Vars {
+		if t.Type == "map" {
+			// spew.Dump(t)
+		}
+
+		if _, ok := t.Value.(int); ok {
+			t.Type = "int"
+		}
+
 		if t.Value == "" {
 			for _, secret := range s.Spec.Secrets {
 				if secret.Name == t.Name {
@@ -270,22 +234,33 @@ func (w *Workspace) substitute(secretsFile string) {
 				}
 			}
 		}
+
 		if t.Type == "string" {
 			w.Spec.Resources.Vars[i].Value = fmt.Sprintf("\"%s\"", t.Value)
 		}
+
 	}
+
 	for i, t := range w.Spec.Resources.Env {
 		if t.Value == "" {
 			for _, secret := range s.Spec.Secrets {
+				spew.Dump(secret)
 				if secret.Name == t.Name {
+					spew.Dump(secret)
 					t.Value = secret.Value
 					break
 				}
 			}
 		}
+
+		if _, ok := t.Value.(int); ok {
+			t.Type = "int"
+		}
+
 		if t.Type == "string" {
 			if t.isJSON() {
-				t.Value = strconv.Quote(t.Value)
+				// spew.Dump(t)
+				t.Value = strconv.Quote(fmt.Sprintf("%v", t.Value))
 			} else {
 				t.Value = fmt.Sprintf("\"%s\"", t.Value)
 			}
@@ -304,10 +279,5 @@ func (w *Workspace) substitute(secretsFile string) {
 			}
 		}
 	}
-}
 
-func (v Variable) isJSON() bool {
-	var x struct{}
-	err := json.Unmarshal([]byte(v.Value), &x)
-	return err == nil
 }
