@@ -10,7 +10,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/yaml.v1"
 )
 
@@ -221,8 +220,7 @@ func (w *Workspace) substitute(secretsFile string) {
 	for i, t := range w.Spec.Resources.Vars {
 
 		if _, ok := t.Value.(int); ok {
-			t.Type = "int"
-			spew.Dump(t)
+			t.Type = "number"
 		}
 
 		if t.Value == nil {
