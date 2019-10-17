@@ -3,8 +3,6 @@ package entities
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 type Variable struct {
@@ -26,7 +24,6 @@ func initVarMap(vars []Variable) []Variable {
 
 func (v Variable) isJSON() bool {
 	var x struct{}
-	spew.Dump(v)
 	err := json.Unmarshal([]byte(fmt.Sprintf("%v", v.Value)), &x)
 	return err == nil
 }

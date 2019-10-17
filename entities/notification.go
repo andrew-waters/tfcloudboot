@@ -5,5 +5,5 @@ type Notification struct {
 	Enabled         bool     `yaml:"enabled"`
 	DestinationType string   `yaml:"destination_type"`
 	Triggers        []string `yaml:"triggers"`
-	URL             string   `yam:"url`
+	URL             string   `yaml:"url"`
 }
