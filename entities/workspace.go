@@ -220,7 +220,7 @@ func (w *Workspace) substitute(secretsFile string) {
 	for i, t := range w.Spec.Resources.Vars {
 
 		if _, ok := t.Value.(int); ok {
-			t.Type = "number"
+			t.Type = "int"
 		}
 
 		if t.Value == nil {
