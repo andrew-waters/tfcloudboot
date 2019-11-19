@@ -10,7 +10,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/yaml.v1"
 )
 
@@ -167,7 +166,6 @@ func (w *Workspace) Output(outputDir string, outputName string, secretsFile stri
 			return x == reflect.ValueOf(a).Len()-1
 		},
 		"split": func(x string, y string) []string {
-			spew.Dump(strings.Split(x, y))
 			return strings.Split(x, y)
 		},
 		"trim": func(x string) string {
