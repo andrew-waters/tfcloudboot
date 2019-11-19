@@ -10,6 +10,7 @@ type Variable struct {
 	Type      string      `yaml:"type"`
 	Value     interface{} `yaml:"value"`
 	Sensitive bool        `yaml:"sensitive"`
+	Multiline bool        `yaml:"multiline"`
 }
 
 // initialise variables (can be normal terraform variables of environment variables)
