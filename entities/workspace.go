@@ -246,7 +246,12 @@ func (w *Workspace) substitute(secretsFile string) {
 				v := strings.ReplaceAll(fmt.Sprintf("%s", t.Value), "\n", "-!-_!")
 				w.Spec.Resources.Vars[i].Value = v
 			} else {
-				w.Spec.Resources.Vars[i].Value = fmt.Sprintf("\"%s\"", t.Value)
+				if t.isJSON() {
+					t.Value = strconv.Quote(fmt.Sprintf("%v", t.Value))
+				} else {
+					t.Value = fmt.Sprintf("\"%s\"", t.Value)
+				}
+				w.Spec.Resources.Vars[i].Value = t.Value
 			}
 		}
 
