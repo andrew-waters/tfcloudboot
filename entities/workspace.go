@@ -74,7 +74,7 @@ resource "tfe_variable" "{{ $.Metadata.ID }}_var_{{ .Name }}" {
 resource "tfe_variable" "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {
 	workspace_id = tfe_workspace.{{ $.Metadata.ID }}.id
 	key          = "{{ .Name }}"
-	value        = var.{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}}
+	value        = var.{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}
 	category     = "env"{{ if .Sensitive }}
 	sensitive    = true{{ end }}
 }
