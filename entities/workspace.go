@@ -44,7 +44,7 @@ resource "tfe_notification_configuration" "{{ .Name }}" {
   destination_type          = "{{ .DestinationType }}"
   triggers                  = [{{ with .Triggers }}{{$n := .}}{{ range $i, $e := . }}"{{ . }}"{{ if last $i $n }}{{ else }}, {{ end }}{{ end }}{{ end }}]
   url                       = var.{{ $.Metadata.ID }}_var_notifications_{{ .Name }}_url
-  workspace_external_id     = tfe_workspace.{{ $.Metadata.ID }}.external_id
+  workspace_id     			= tfe_workspace.{{ $.Metadata.ID }}.external_id
 }
 {{ end }}{{ end }}
 
@@ -74,7 +74,7 @@ resource "tfe_variable" "{{ $.Metadata.ID }}_var_{{ .Name }}" {
 resource "tfe_variable" "{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}" {
 	workspace_id = tfe_workspace.{{ $.Metadata.ID }}.id
 	key          = "{{ .Name }}"
-	value        = "${var.{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}}"
+	value        = var.{{ $.Metadata.ID }}_env_{{ .Name | ToLower }}}
 	category     = "env"{{ if .Sensitive }}
 	sensitive    = true{{ end }}
 }
